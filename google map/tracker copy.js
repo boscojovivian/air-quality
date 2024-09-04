@@ -171,26 +171,36 @@ function exportData() {
         elapsedTime = (new Date().getTime() - startTime) / 3600000; // 以小時為單位
     } else if (positions.length > 0) {
         const lastPositionTime = new Date(positions[positions.length - 1].timestamp).getTime();
-        elapsedTime = (lastPositionTime - startTime) / 3600000;
+        if (!isNaN(lastPositionTime)) {
+            elapsedTime = (lastPositionTime - startTime) / 3600000;
+        } else {
+            console.error("Invalid timestamp in positions array.");
+            elapsedTime = 0;  // 或者处理方式根据业务需求调整
+        }
+    } else {
+        console.warn("No positions recorded, cannot calculate elapsed time.");
     }
 
-    const data = {
-        distance: (totalDistance / 1000).toFixed(2) + ' 公里',  // 以公里為單位
-        time: elapsedTime.toFixed(2) + ' 小時',  // 以小時為單位
-        path: positions,  // 使用完整的路徑數據，包括時間戳
-        calculatedRoute: calculatedRoute || []  // 計算的路線，如果尚未計算則為空數組
-    };
+    if (!isNaN(elapsedTime)) {
+        const data = {
+            distance: (totalDistance / 1000).toFixed(2) + ' 公里',  // 以公里為單位
+            time: elapsedTime.toFixed(2) + ' 小時',  // 以小時為單位
+            path: positions,  // 使用完整的路徑數據，包括時間戳
+            calculatedRoute: calculatedRoute || []  // 計算的路線，如果尚未計算則為空數組
+        };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'route-data.json';
-    a.click();
-    URL.revokeObjectURL(url);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'route-data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    } else {
+        console.error("Elapsed time is NaN, data export aborted.");
+    }
 }
-
 
 
 
